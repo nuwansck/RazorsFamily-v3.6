@@ -1,4 +1,4 @@
-"""Main orchestrator for the CPR Gold Bot — v3.8
+"""Main orchestrator for the CPR Gold Bot — v3.9
 
 Runs the configurable-interval trading cycle for XAU/USD, applies session and
 risk controls, places orders through OANDA, and persists runtime state.
@@ -224,7 +224,8 @@ def validate_settings(settings: dict) -> dict:
     settings.setdefault("report_daily_hour",     15)          # v3.1
     settings.setdefault("report_daily_minute",   30)          # v3.1
     settings.setdefault("db_vacuum_day_of_week", 6)           # v3.1
-    settings.setdefault("bot_version",           "3.8")       # v3.8
+    settings.setdefault("bot_version",           "3.9")       # v3.9
+    settings.setdefault("intraday_bias_pct",        0.5)         # v3.9: % from pivot for intraday trend
     settings.setdefault("daily_trend_filter_enabled", True)   # v3.7
     settings.setdefault("daily_trend_filter_days",    3)      # v3.7
     settings.setdefault("gap_filter_pct",        0)           # v3.4: 0=disabled

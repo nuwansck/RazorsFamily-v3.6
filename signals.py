@@ -1,4 +1,4 @@
-"""Signal engine for CPR breakout detection — v3.7
+"""Signal engine for CPR breakout detection — v3.9
 
 All parameters read from settings.json — no hardcoded values.
 
@@ -176,6 +176,7 @@ class SignalEngine:
         _trend_days    = int((settings or {}).get("daily_trend_filter_days", 3))
         _daily_trend   = "NEUTRAL"  # BULL / BEAR / NEUTRAL
         _trend_reason  = ""
+        _intraday_bias_pct = float((settings or {}).get("intraday_bias_pct", 0.5)) / 100
         if _trend_enabled and len(daily_highs) >= _trend_days + 1:
             # Calculate last N pivots (each from prior day's H/L/C)
             _pivots = []
@@ -185,17 +186,37 @@ class SignalEngine:
             # Check if pivots are consistently rising or falling
             _all_rising  = all(_pivots[i+1] > _pivots[i] for i in range(len(_pivots)-1))
             _all_falling = all(_pivots[i+1] < _pivots[i] for i in range(len(_pivots)-1))
-            if _all_falling:
+
+            # v3.9: intraday bias — strong same-day move triggers trend even without 3-day history
+            # e.g. price 9% below pivot on a gap-down Monday → immediate BEAR regardless of pivot history
+            _intraday_bear = (_intraday_bias_pct > 0 and
+                              current_close < pivot * (1 - _intraday_bias_pct))
+            _intraday_bull = (_intraday_bias_pct > 0 and
+                              current_close > pivot * (1 + _intraday_bias_pct))
+            _intraday_pct  = abs(current_close - pivot) / pivot * 100
+
+            if _all_falling or _intraday_bear:
                 _daily_trend  = "BEAR"
-                _trend_reason = (f"Daily trend BEAR — {_trend_days}d pivots falling "
-                                 f"({' → '.join(f'{p:.0f}' for p in _pivots)}) — BUY blocked")
-            elif _all_rising:
+                if _intraday_bear and not _all_falling:
+                    _trend_reason = (f"Intraday BEAR — price ${current_close:.2f} is "
+                                     f"{_intraday_pct:.1f}% below pivot ${pivot:.2f} "
+                                     f"(>{_intraday_bias_pct*100:.1f}% threshold) — BUY blocked")
+                else:
+                    _trend_reason = (f"Daily trend BEAR — {_trend_days}d pivots falling "
+                                     f"({' → '.join(f'{p:.0f}' for p in _pivots)}) — BUY blocked")
+            elif _all_rising or _intraday_bull:
                 _daily_trend  = "BULL"
-                _trend_reason = (f"Daily trend BULL — {_trend_days}d pivots rising "
-                                 f"({' → '.join(f'{p:.0f}' for p in _pivots)}) — SELL blocked")
+                if _intraday_bull and not _all_rising:
+                    _trend_reason = (f"Intraday BULL — price ${current_close:.2f} is "
+                                     f"{_intraday_pct:.1f}% above pivot ${pivot:.2f} "
+                                     f"(>{_intraday_bias_pct*100:.1f}% threshold) — SELL blocked")
+                else:
+                    _trend_reason = (f"Daily trend BULL — {_trend_days}d pivots rising "
+                                     f"({' → '.join(f'{p:.0f}' for p in _pivots)}) — SELL blocked")
             else:
                 _trend_reason = (f"Daily trend NEUTRAL — mixed pivots "
-                                 f"({' → '.join(f'{p:.0f}' for p in _pivots)})")
+                                 f"({' → '.join(f'{p:.0f}' for p in _pivots)}), "
+                                 f"price {_intraday_pct:.1f}% from pivot")
 
         levels["daily_trend"]        = _daily_trend
         levels["daily_trend_reason"] = _trend_reason
