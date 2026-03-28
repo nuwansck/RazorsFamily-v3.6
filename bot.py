@@ -1,4 +1,4 @@
-"""Main orchestrator for the CPR Gold Bot — v3.7
+"""Main orchestrator for the CPR Gold Bot — v3.8
 
 Runs the configurable-interval trading cycle for XAU/USD, applies session and
 risk controls, places orders through OANDA, and persists runtime state.
@@ -224,7 +224,7 @@ def validate_settings(settings: dict) -> dict:
     settings.setdefault("report_daily_hour",     15)          # v3.1
     settings.setdefault("report_daily_minute",   30)          # v3.1
     settings.setdefault("db_vacuum_day_of_week", 6)           # v3.1
-    settings.setdefault("bot_version",           "3.7")       # v3.7
+    settings.setdefault("bot_version",           "3.8")       # v3.8
     settings.setdefault("daily_trend_filter_enabled", True)   # v3.7
     settings.setdefault("daily_trend_filter_days",    3)      # v3.7
     settings.setdefault("gap_filter_pct",        0)           # v3.4: 0=disabled
@@ -1501,8 +1501,7 @@ def _signal_phase(db, run_id, settings, alert, trader, history, now_sgt, today, 
     # previous versions, meaning signal_threshold had no effect.  Explicit gate
     # added here — score must meet the session threshold (default 4) to proceed.
     if direction == "NONE" or position_usd <= 0:
-        _send_signal_update("WATCHING", _clean_reason(details),
-                            {"session_ok": True, "news_ok": True, "open_trade_ok": True})
+        # v3.8: suppress WATCHING messages when no signal — reduces noise
         log.info("No trade. Score=%s dir=%s position=$%s", score, direction, position_usd, extra={"run_id": run_id})
         update_runtime_state(last_cycle_finished=now_sgt.strftime("%Y-%m-%d %H:%M:%S"), status="COMPLETED_NO_SIGNAL", score=score, direction=direction)
         db.finish_cycle(run_id, status="COMPLETED", summary={"signals": 1, "trades_placed": 0, "score": score, "direction": direction})
@@ -1634,7 +1633,10 @@ def _signal_phase(db, run_id, settings, alert, trader, history, now_sgt, today, 
         _send_signal_update("BLOCKED", f"Spread too high ({spread_pips} > {spread_limit} pips)",
                             {"rr_ratio": rr_ratio, "tp_pct": tp_pct, "spread_pips": spread_pips,
                              "spread_limit": spread_limit, "session_ok": True, "news_ok": True, "open_trade_ok": True, "margin_ok": True})
-        send_once_per_state(alert, ops, "spread_state", f"spread:{macro}:{spread_pips}",
+        # v3.8: spread skip logged only, not sent to Telegram (too noisy)
+        log.info("Spread too wide: %s pips > %s limit (%s)", spread_pips, spread_limit, macro, extra={"run_id": run_id})
+        if False:  # kept for reference
+          send_once_per_state(alert, ops, "spread_state", f"spread:{macro}:{spread_pips}",
                             msg_spread_skip(banner, session, spread_pips, spread_limit))
         db.finish_cycle(run_id, status="SKIPPED", summary={"stage": "spread_guard"})
         update_runtime_state(last_cycle_finished=now_sgt.strftime("%Y-%m-%d %H:%M:%S"), status="SKIPPED_SPREAD_GUARD")

@@ -1,16 +1,19 @@
 """
-Telegram Alert System — CPR Gold Bot v2.5
+Telegram Alert System — RF Scalp Bot
 
 Retries up to 3 times on 5xx errors with exponential backoff.
 HTTP 429 (rate-limit) respects the Retry-After header.
 4xx errors (bad token, bad chat_id) are NOT retried — they are config errors.
+
+Bot name in the Telegram header is read from settings.json (bot_name key)
+so it always reflects the current version without any code changes.
 """
 import logging
 import time
 
 import requests
 
-from config_loader import load_secrets
+from config_loader import load_secrets, load_settings
 
 log = logging.getLogger(__name__)
 
@@ -29,8 +32,11 @@ class TelegramAlert:
             log.warning("Telegram not configured.")
             return False
 
+        # Bot name read from settings.json so the Telegram header always
+        # reflects the current version — no hardcoded value here.
+        _bot_name = load_settings().get("bot_name", "RF Scalp")
         url  = f"https://api.telegram.org/bot{self.token}/sendMessage"
-        text = f"🤖 CPR Gold Bot\n{'─' * 22}\n{message}"
+        text = f"🤖 {_bot_name}\n{'─' * 22}\n{message}"
 
         for attempt in range(_MAX_RETRIES):
             try:

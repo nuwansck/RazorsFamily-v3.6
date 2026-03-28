@@ -1,14 +1,16 @@
 """
-Telegram connection test — CPR Gold Bot
+Telegram connection test — RF Scalp Bot
 Run: python test_telegram.py
 """
 from telegram_alert import TelegramAlert
+from config_loader import load_settings
 
 if __name__ == "__main__":
+    _name = load_settings().get("bot_name", "RF Scalp")
     alert = TelegramAlert()
     ok = alert.send(
-        "✅ Test message — Telegram is connected and working!\n"
-        "CPR Gold Bot is ready to deploy."
+        f"✅ Test message — Telegram is connected and working!\n"
+        f"{_name} is ready to deploy."
     )
     if ok:
         print("✅ Message sent successfully.")

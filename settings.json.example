@@ -58,7 +58,7 @@
   "xau_margin_rate_override": 0.2,
   "trading_day_start_hour_sgt": 8,
   "exhaustion_atr_mult": 2.0,
-  "bot_version": "3.7",
+  "bot_version": "3.8",
   "instrument": "XAU_USD",
   "timeframe": "M15",
   "m15_candle_count": 65,
