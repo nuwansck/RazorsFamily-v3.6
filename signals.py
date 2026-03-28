@@ -1,4 +1,4 @@
-"""Signal engine for CPR breakout detection — v3.6
+"""Signal engine for CPR breakout detection — v3.7
 
 All parameters read from settings.json — no hardcoded values.
 
@@ -148,7 +148,8 @@ class SignalEngine:
         instrument = str((settings or {}).get("instrument", "XAU_USD"))
 
         # ── Daily candles → CPR levels (always fetched live — no cache) ────
-        daily_closes, daily_highs, daily_lows = self._fetch_candles(instrument, "D", 3)
+        _d_count = max(4, int((settings or {}).get("daily_trend_filter_days", 3)) + 1)
+        daily_closes, daily_highs, daily_lows = self._fetch_candles(instrument, "D", _d_count)
         if len(daily_closes) < 2:
             return 0, "NONE", "Not enough daily data for CPR", {}, 0
 
@@ -167,6 +168,37 @@ class SignalEngine:
         pdh           = prev_high
         pdl           = prev_low
         cpr_width_pct = abs(tc - bc) / pivot * 100
+
+        # ── Daily pivot trend filter (v3.7) ──────────────────────────────
+        # Compares last N daily pivots. If all falling → only SELL allowed.
+        # If all rising → only BUY allowed. Stops trading against macro trend.
+        _trend_enabled = (settings or {}).get("daily_trend_filter_enabled", True)
+        _trend_days    = int((settings or {}).get("daily_trend_filter_days", 3))
+        _daily_trend   = "NEUTRAL"  # BULL / BEAR / NEUTRAL
+        _trend_reason  = ""
+        if _trend_enabled and len(daily_highs) >= _trend_days + 1:
+            # Calculate last N pivots (each from prior day's H/L/C)
+            _pivots = []
+            for _i in range(-(_trend_days + 1), -1):
+                _ph = daily_highs[_i]; _pl = daily_lows[_i]; _pc = daily_closes[_i]
+                _pivots.append((_ph + _pl + _pc) / 3)
+            # Check if pivots are consistently rising or falling
+            _all_rising  = all(_pivots[i+1] > _pivots[i] for i in range(len(_pivots)-1))
+            _all_falling = all(_pivots[i+1] < _pivots[i] for i in range(len(_pivots)-1))
+            if _all_falling:
+                _daily_trend  = "BEAR"
+                _trend_reason = (f"Daily trend BEAR — {_trend_days}d pivots falling "
+                                 f"({' → '.join(f'{p:.0f}' for p in _pivots)}) — BUY blocked")
+            elif _all_rising:
+                _daily_trend  = "BULL"
+                _trend_reason = (f"Daily trend BULL — {_trend_days}d pivots rising "
+                                 f"({' → '.join(f'{p:.0f}' for p in _pivots)}) — SELL blocked")
+            else:
+                _trend_reason = (f"Daily trend NEUTRAL — mixed pivots "
+                                 f"({' → '.join(f'{p:.0f}' for p in _pivots)})")
+
+        levels["daily_trend"]        = _daily_trend
+        levels["daily_trend_reason"] = _trend_reason
 
         levels = {
             "pivot":         round(pivot, 2),
@@ -266,6 +298,20 @@ class SignalEngine:
                 f"❌ Price {current_close:.2f} inside CPR (TC={tc:.2f} BC={bc:.2f}) — no signal"
             )
             return 0, "NONE", " | ".join(reasons), levels, 0
+
+        # ── Daily trend filter gate (v3.7) ─────────────────────────────────
+        if _trend_enabled and _daily_trend != "NEUTRAL":
+            if _daily_trend == "BEAR" and direction == "BUY":
+                reasons.append(f"❌ {_trend_reason}")
+                return 0, "NONE", " | ".join(reasons), levels, 0
+            elif _daily_trend == "BULL" and direction == "SELL":
+                reasons.append(f"❌ {_trend_reason}")
+                return 0, "NONE", " | ".join(reasons), levels, 0
+            else:
+                reasons.append(f"✅ {_trend_reason} — direction aligned")
+        elif _trend_enabled:
+            reasons.append(f"✅ {_trend_reason}")
+
 
         # ── 2. SMA alignment ───────────────────────────────────────────────
         if direction == "BUY":

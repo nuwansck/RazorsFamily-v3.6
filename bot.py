@@ -1,4 +1,4 @@
-"""Main orchestrator for the CPR Gold Bot — v3.6
+"""Main orchestrator for the CPR Gold Bot — v3.7
 
 Runs the configurable-interval trading cycle for XAU/USD, applies session and
 risk controls, places orders through OANDA, and persists runtime state.
@@ -172,7 +172,7 @@ def validate_settings(settings: dict) -> dict:
     if missing:
         raise ValueError(f"Missing required settings keys: {missing}")
 
-    settings.setdefault("signal_threshold",             4)   # v2.4: raised from 3
+    settings.setdefault("signal_threshold",             5)   # v3.7: raised from 4
     settings.setdefault("position_full_usd",            15)   # v3.2: demo sizing
     settings.setdefault("position_partial_usd",         10)   # v3.2: demo sizing
     settings.setdefault("account_balance_override",     0)
@@ -224,11 +224,13 @@ def validate_settings(settings: dict) -> dict:
     settings.setdefault("report_daily_hour",     15)          # v3.1
     settings.setdefault("report_daily_minute",   30)          # v3.1
     settings.setdefault("db_vacuum_day_of_week", 6)           # v3.1
-    settings.setdefault("bot_version",           "3.6")       # v3.6
+    settings.setdefault("bot_version",           "3.7")       # v3.7
+    settings.setdefault("daily_trend_filter_enabled", True)   # v3.7
+    settings.setdefault("daily_trend_filter_days",    3)      # v3.7
     settings.setdefault("gap_filter_pct",        0)           # v3.4: 0=disabled
     settings.setdefault("gap_filter_wait_min",   30)          # v3.4
     settings.setdefault("post_sl_direction_block_count", 2)   # v3.4
-    settings.setdefault("post_sl_direction_block_min",   60)  # v3.4
+    settings.setdefault("post_sl_direction_block_min",   120) # v3.7: extended to 2hr
     settings.setdefault("enforce_min_rr",        True)        # v3.4
     settings.setdefault("post_tp_cooldown_min",  0)           # v3.3: 0=disabled
 

@@ -1,5 +1,5 @@
 """Version — single source of truth. Bot identity also in settings.json (v3.1+)."""
-__version__ = "3.6"
+__version__ = "3.7"
 BOT_NAME    = "CPR Gold Bot"
 
 def get_version(settings: dict | None = None) -> str:

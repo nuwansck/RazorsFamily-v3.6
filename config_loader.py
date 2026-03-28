@@ -86,6 +86,9 @@ def ensure_persistent_settings() -> Path:
         'post_sl_direction_block_min',
         'enforce_min_rr',
         'london_session_end',
+        'daily_trend_filter_enabled',
+        'daily_trend_filter_days',
+        'cpr_wide_pct',
     }
 
     if SETTINGS_FILE.exists():
@@ -136,7 +139,7 @@ def ensure_persistent_settings() -> Path:
     default_settings.setdefault('loss_streak_cooldown_min', 30)
     default_settings.setdefault('min_reentry_wait_min', 5)
     default_settings.setdefault('breakeven_enabled', False)
-    default_settings.setdefault('signal_threshold', 4)
+    default_settings.setdefault('signal_threshold', 5)
     default_settings.setdefault('max_trades_london', 10)
     default_settings.setdefault('max_trades_us', 10)
     default_settings.setdefault('rr_ratio', 2.65)
@@ -159,7 +162,9 @@ def ensure_persistent_settings() -> Path:
     default_settings.setdefault('us_session_start',      21)
     default_settings.setdefault('us_session_end',        23)
     default_settings.setdefault('us_cont_session_start', 0)
-    default_settings.setdefault('bot_version',           '3.6')
+    default_settings.setdefault('bot_version',           '3.7')
+    default_settings.setdefault('daily_trend_filter_enabled', True)
+    default_settings.setdefault('daily_trend_filter_days',    3)
     default_settings.setdefault('post_tp_cooldown_min',  20)
     default_settings.setdefault('gap_filter_pct',        2.0)
     default_settings.setdefault('gap_filter_wait_min',   30)
@@ -220,7 +225,7 @@ def load_settings() -> dict:
     settings.setdefault('loss_streak_cooldown_min', 30)
     settings.setdefault('min_reentry_wait_min', 5)
     settings.setdefault('breakeven_enabled', False)
-    settings.setdefault('signal_threshold', 4)
+    settings.setdefault('signal_threshold', 5)
     settings.setdefault('max_trades_london', 10)
     settings.setdefault('max_trades_us', 10)
     settings.setdefault('rr_ratio', 2.65)
@@ -243,7 +248,9 @@ def load_settings() -> dict:
     settings.setdefault('us_session_start',      21)
     settings.setdefault('us_session_end',        23)
     settings.setdefault('us_cont_session_start', 0)
-    settings.setdefault('bot_version',           '3.6')
+    settings.setdefault('bot_version',           '3.7')
+    settings.setdefault('daily_trend_filter_enabled', True)
+    settings.setdefault('daily_trend_filter_days',    3)
     settings.setdefault('post_tp_cooldown_min',  20)
     settings.setdefault('gap_filter_pct',        2.0)
     settings.setdefault('gap_filter_wait_min',   30)

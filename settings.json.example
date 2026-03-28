@@ -1,9 +1,9 @@
 {
-  "_comment": "CPR Gold Bot v3.6 — restored London end 20:59, TP now SL×RR guaranteed",
+  "_comment": "CPR Gold Bot v3.7 — threshold 5, 2hr dir block, daily trend filter",
   "bot_name": "CPR Gold Bot",
   "demo_mode": true,
   "trade_gold": true,
-  "signal_threshold": 4,
+  "signal_threshold": 5,
   "position_full_usd": 15,
   "position_partial_usd": 10,
   "sl_mode": "pct_based",
@@ -58,12 +58,12 @@
   "xau_margin_rate_override": 0.2,
   "trading_day_start_hour_sgt": 8,
   "exhaustion_atr_mult": 2.0,
-  "bot_version": "3.6",
+  "bot_version": "3.7",
   "instrument": "XAU_USD",
   "timeframe": "M15",
   "m15_candle_count": 65,
   "cpr_narrow_pct": 0.5,
-  "cpr_wide_pct": 1.0,
+  "cpr_wide_pct": 0.8,
   "sma_short_period": 20,
   "sma_long_period": 50,
   "atr_period": 14,
@@ -85,6 +85,8 @@
   "gap_filter_pct": 2.0,
   "gap_filter_wait_min": 30,
   "post_sl_direction_block_count": 2,
-  "post_sl_direction_block_min": 60,
-  "enforce_min_rr": true
+  "post_sl_direction_block_min": 120,
+  "enforce_min_rr": true,
+  "daily_trend_filter_enabled": true,
+  "daily_trend_filter_days": 3
 }
